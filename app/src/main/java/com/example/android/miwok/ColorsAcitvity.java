@@ -1,5 +1,7 @@
 package com.example.android.miwok;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,7 +14,23 @@ import java.util.ArrayList;
 
 public class ColorsAcitvity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
+    private AudioManager maudioManager;
 
+    AudioManager.OnAudioFocusChangeListener mOnAudioChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        public void onAudioFocusChange(int focusChange) {
+            if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK){
+                mediaPlayer.pause();
+                mediaPlayer.seekTo(0);
+            // Pause playback
+        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                mediaPlayer.start();
+            // Resume playback
+        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+             releaseMediaPlayer();
+            // Stop playback
+        }
+    }
+};
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
@@ -23,6 +41,8 @@ public class ColorsAcitvity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.word_list);
+
+        maudioManager  =(AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         ArrayList<Word> words = new ArrayList<Word>();
         words.add(new Word("red","weṭeṭṭi",R.drawable.color_red,R.raw.color_red));
@@ -43,10 +63,20 @@ public class ColorsAcitvity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int i, long id) {
                 releaseMediaPlayer();
                 Word word  = words.get(i);
-                mediaPlayer = MediaPlayer.create(ColorsAcitvity.this, word.getmMediaResourceId());       //we need to pass numbersactivity.this as context since its in onclicklistener method
+                int result = maudioManager.requestAudioFocus(mOnAudioChangeListener,
+                        // Use the music stream.
+                        AudioManager.STREAM_MUSIC,
+                        // Request permanent focus.
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
-                mediaPlayer.start();
-                mediaPlayer.setOnCompletionListener(mCompletionListener);
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    // Start playback.
+
+                    mediaPlayer = MediaPlayer.create(ColorsAcitvity.this, word.getmMediaResourceId());       //we need to pass numbersactivity.this as context since its in onclicklistener method
+
+                    mediaPlayer.start();
+                    mediaPlayer.setOnCompletionListener(mCompletionListener);
+                }
             }
         });
     }
@@ -68,6 +98,7 @@ public class ColorsAcitvity extends AppCompatActivity {
             // setting the media player to null is an easy way to tell that the media player
             // is not configured to play an audio file at the moment.
             mediaPlayer = null;
+            maudioManager.abandonAudioFocus(mOnAudioChangeListener);
         }
     }
 }
