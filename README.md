@@ -1,7 +1,7 @@
 Miwok App
 ===================================
 
-This app displays lists of vocabulary words for the user to learn the Miwok language.
+This app displays lists of vocabulary words for the user to learn the Miwok language.It can also be used by Miwok tribes so that they can easily learn english  It is very user friendly application and optimized too 
 
 
 Pre-requisites
